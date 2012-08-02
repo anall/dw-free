@@ -164,3 +164,49 @@ p.intro {
     margin-right: auto;
     padding: 10px;
 }
+
+.importer .icon_container {
+    float: left;
+    width: 45%;
+    margin: 1em 1em 0 0;
+}
+
+.importer .icon_container .icon_import {
+    background-color: #CCC;
+    margin-bottom: 0.5em;
+}
+
+.importer .icon {
+    float: left;
+}
+.importer .icon_info {
+    float: left;
+    margin-top: 0.5em;
+}
+
+.importer .icon_info label {
+    float: left; 
+    min-width: 7em;
+    padding-left: 1em;
+}
+
+.icon_container .icon_import input { 
+    float: left;
+}
+
+.icon_container .icon_import label {
+    display: block;
+    margin-left: 2em;
+}
+
+.icon_container .icon_import span.display { 
+    margin: 0 1em;
+}
+
+.icon_container .icon_import span.display.over_limit {
+    color: #D1272D;
+}
+
+.icon_container.selected {
+
+}

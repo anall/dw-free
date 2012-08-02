@@ -1,0 +1,23 @@
+[%- dw.need_res('stc/importer.css') -%]
+<div class='importer'>
+<h2 class='gradient'>Choose the icons that you'd like to keep active</h2>
+
+<p>Blah blah blah</p>
+<p>Number of icons: <span id='num_icons'>[% icons.size %]</span></p>
+<p>Number of icons you've chosen: <span id='num_chosen'>---</span></p>
+<p>Numver of available slots: <span id='num_unused'>[% max %]</span></p>
+
+[% FOREACH icon IN icons -%]
+<div class='icon_container importoption'>
+    <div class='icon_import'>
+        <input type="checkbox" value="1" id="icon_import_[% list.index %]" />
+        <label for="icon_import_[% list.index %]">Active</label>
+    </div>
+    [% icon.imgtag %]
+    <div class='icon-info'>
+    </div>
+</div>
+[%- END %]
+
+<div class='clear-floats'></div>
+</div>

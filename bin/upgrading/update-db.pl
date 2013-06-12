@@ -29,6 +29,8 @@ use Image::Size ();
 use LJ::S2;
 use MogileFS::Admin;
 
+my $shoild_fork = 0;
+
 my $opt_sql = 0;
 my $opt_drop = 0;
 my $opt_pop = 0;
@@ -330,16 +332,18 @@ sub populate_s2 {
             $layer{$base}->{'built'} = 1;
 
             # Since we might fork, we disconnect here and then people can get a new one.
-            LJ::DB::disconnect_dbs();
+            LJ::DB::disconnect_dbs() if $should_fork;
 
             # Fork out a child so it can compile. This saves us the memory usage.
-            if ( my $pid = fork ) {
-                $dbh = LJ::get_db_writer();
-                waitpid $pid, 0;
-                die if $? >> 8 != 0;
-                return;
-            } else {
-                $dbh = LJ::get_db_writer();
+            if ( $should_fork ) {
+                if ( my $pid = fork ) {
+                    $dbh = LJ::get_db_writer();
+                    waitpid $pid, 0;
+                    die if $? >> 8 != 0;
+                    return;
+                } else {
+                    $dbh = LJ::get_db_writer();
+                }
             }
 
             # compile!
@@ -381,7 +385,7 @@ sub populate_s2 {
             LJ::S2::set_layer_source($id, \$s2source);
 
             # We are the child, so we can exit here.
-            exit;
+            exit if $should_fork;
         };
 
         my @layerfiles = LJ::get_all_files("styles/s2layers.dat", home_first => 1);

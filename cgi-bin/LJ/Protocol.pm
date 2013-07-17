@@ -63,6 +63,7 @@ my %e = (
      "155" => [ E_TEMP, "Non-authenticated email address" ],
      "157" => [ E_TEMP, "Tags error" ],
      "158" => [ E_PERM, "Comment error" ],
+     "159" => [ E_PERM, "OAuth Error" ],
 
      # Client Errors
      "200" => [ E_PERM, "Missing required argument(s)" ],
@@ -159,8 +160,7 @@ sub error_message
     return $totalerror;
 }
 
-sub do_request
-{
+sub do_request {
     # get the request and response hash refs
     my ($method, $req, $err, $flags) = @_;
 
@@ -173,10 +173,36 @@ sub do_request
     $flags ||= {};
     my @args = ($req, $err, $flags);
 
-    my $apache_r = eval { BML::get_request() };
-    $apache_r->notes->{codepath} = "protocol.$method"
-        if $apache_r && ! $apache_r->notes->{codepath};
+    # This needs to be very early, instead of in 'authenticate'
+    #  firstly to get the username, and secondly because if we
+    #  attempt and fail OAuth we do not want to be able to do
+    #  anything, including the "logged-out" methods.
+    my $r = DW::Request->get;
+    my $auth_meth = $req->{auth_method} || 'clear';
+    if ( $r ) {
+        if ( $auth_meth ne 'oauth' && $r->pnote("xmlrpc_oauth_status") ) {
+            return fail( $err, 159, "not_wanted" );
+        } elsif ( $auth_meth eq 'oauth' && ! $r->pnote("xmlrpc_oauth_status") ) {
+            return fail( $err, 159, "not_attempted" );
+        } elsif ( $auth_meth eq 'oauth' ) {
+            my $status = $r->pnote("xmlrpc_oauth_status");
+            my $result = $status->[0];
+            if ( $result ) {
+                my $u = $status->[1];
+                if ( $u ) {
+                    $flags->{u} = $u;
+                    $req->{username} = $u->user;
+                }
+            } else {
+                my $error = $status->[1];
+                return fail( $err, 159, $error );
+            }
+        }
+    }
 
+    $r->note("codepath", "protocol.$method")
+        if $r && ! $r->note("codepath");
+ 
     if ($method eq "login")            { return login(@args);            }
     if ($method eq "getfriendgroups")  { return getfriendgroups(@args);  }
     if ($method eq "gettrustgroups")   { return gettrustgroups(@args);   }
@@ -205,8 +231,8 @@ sub do_request
     if ($method eq "setmessageread")   { return setmessageread(@args);   }
     if ($method eq "addcomment")       { return addcomment(@args);   }
 
-    $apache_r->notes->{codepath} = ""
-        if $apache_r;
+    $r->note("codepath", "")
+        if $r;
 
     return fail($err,201);
 }
@@ -3302,29 +3328,33 @@ sub authenticate
             unless $r->note( 'journalid' );
     }
 
+
     my $ip_banned = 0;
     my $chal_expired = 0;
     my $auth_check = sub {
-
         my $auth_meth = $req->{auth_method} || 'clear';
         if ( $auth_meth eq 'clear' ) {
             return LJ::auth_okay(
                 $u, $req->{password}, $req->{hpassword}, $u->password, \$ip_banned
             );
-        }
-        if ( $auth_meth eq 'challenge' ) {
+        } elsif ( $auth_meth eq 'challenge' ) {
             my $chal_opts = {};
             my $chall_ok = LJ::challenge_check_login(
                 $u, $req->{auth_challenge}, $req->{auth_response}, \$ip_banned, $chal_opts
             );
             $chal_expired = 1 if $chal_opts->{expired};
             return $chall_ok;
-        }
-        if ( $auth_meth eq 'cookie' ) {
+        } elsif ( $auth_meth eq 'cookie' ) {
             return unless $r && $r->header_in( 'X-LJ-Auth' ) eq 'cookie';
 
             my $remote = LJ::get_remote();
             return $remote && $remote->user eq $username ? 1 : 0;
+        } elsif ( $auth_meth eq 'oauth' ) {
+            # If we get here, we have already been through do_request,
+            #   which has handled making sure we properly authenticated.
+            return 1;
+        } else {
+            # FIXME: Bad auth method
         }
     };
 

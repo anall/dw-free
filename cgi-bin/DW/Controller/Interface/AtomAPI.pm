@@ -79,7 +79,7 @@ sub authenticate {
     my ( %opts ) = @_;
     my $r = DW::Request->get;
 
-    my ( $remote ) = DW::Auth->authenticate( wsse => { allow_duplicate_nonce => $opts{allow_duplicate_nonce} || 0 }, digest => 1 );
+    my ( $remote ) = DW::Auth->authenticate( wsse => { allow_duplicate_nonce => $opts{allow_duplicate_nonce} || 0 }, digest => 1, oauth => 1 );
     my $u = LJ::load_user( $opts{journal} ) || $remote;
 
     return ( 0, err( "Authentication failed for this AtomAPI request.",

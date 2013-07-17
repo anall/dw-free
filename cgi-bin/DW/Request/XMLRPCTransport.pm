@@ -54,6 +54,18 @@ sub handler {
             HTTP::Headers->new( $r->headers_in ),
             $r->content );
     $self->request( $req );
+    
+    my ( $result, $u ) = DW::OAuth->user_for_protected_resource_raw(
+        get_args => $r->get_args, # Need to verify these, even if they are unused
+        method => $req->method,
+        #url => $r->uri,  # FIXME!!!!
+        authorizaton_header => $req->header("Authorization"),
+        content_type => $req->header("Content-Type"),
+        want_content => sub { return $req->content; },
+    );
+
+    $r->pnote("xmlrpc_oauth_status",[$result,$u])
+        if defined $result;
 
     $self->SUPER::handle;
 
@@ -63,7 +75,6 @@ sub handler {
     $r->content_type( join '; ', $self->response->content_type );
 
     $r->print( $self->response->content );
-
     return $self;
 }
 
@@ -81,7 +92,6 @@ sub configure {
 }
 
 {
-
     # just create alias
     sub handle;
     *handle = \&handler

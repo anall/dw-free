@@ -19,6 +19,7 @@ use strict;
 
 use Digest::SHA1;
 use MIME::Base64;
+use DW::OAuth;
 
 =head1 NAME
 
@@ -39,6 +40,10 @@ Authentication methods ( specifiable by opts, in order of preference ):
 All of the following can accept either 1 or a hashref of specific options.
 
 =over
+
+=item B< oauth >
+OAuth
+
 =item B< wsse >
 WSSE
 
@@ -89,6 +94,15 @@ sub authenticate {
 
     return ( undef, undef ) unless $r;
 
+    if ( $opts{oauth} ) {
+        my $_opts = {};
+        $_opts = $opts{oauth} if ref $opts{oauth} eq 'HASH';
+        my ( $result, $u ) = DW::OAuth->user_for_protected_resource;
+
+        # FIXME: Handle attempt but fail ( $result defined, but false )
+        #   as a fatal failure, do not check other auth methods.
+        return $ok->( $u, 'oauth' ) if $result;
+    }
     if ( $opts{wsse} ) {
         my $nonce_dup;
         my $wsse = $r->header_in( "X-WSSE" );

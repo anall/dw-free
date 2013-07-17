@@ -29,7 +29,7 @@ use Image::Size ();
 use LJ::S2;
 use MogileFS::Admin;
 
-my $shoild_fork = 0;
+my $should_fork = 0;
 
 my $opt_sql = 0;
 my $opt_drop = 0;

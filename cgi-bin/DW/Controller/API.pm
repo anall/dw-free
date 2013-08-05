@@ -26,7 +26,7 @@ use LJ::JSON;
 use Carp qw/ croak /;
 
 use base qw/ Exporter /;
-@DW::Controller::API::EXPORT = qw/ api_ok api_error /;
+@DW::Controller::API::EXPORT = qw/ api_ok api_error controller /;
 
 # Usage: return api_error( $r->STATUS_CODE_CONSTANT,
 #                          'format/message', [arg, arg, arg...] )
@@ -48,7 +48,7 @@ sub api_error {
     my $r = DW::Request->get;
     $r->print( to_json( $res ) );
     $r->status( $status_code );
-    return;
+    return $r->OK;
 }
 
 # Usage: return api_ok( SCALAR )
@@ -68,7 +68,18 @@ sub api_ok {
     my $r = DW::Request->get;
     $r->print( to_json( $res ) );
     $r->status( 200 );
-    return;
+    return $r->OK;
+}
+
+sub _oauth_error {
+    return api_error( "OAuth Error: %s", $_[0] );
+}
+
+sub controller {
+    my ( %args ) = @_;
+    $args{oauth} //= 1;
+    $args{oauth_fail_sub} //= \&_oauth_error;
+    return DW::Controller::controller( %args );
 }
 
 1;

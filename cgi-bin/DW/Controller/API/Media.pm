@@ -48,7 +48,7 @@ DW::Routing->register_api_endpoints(
 # Allows uploading a file. Allocates and returns a unique media ID for the upload.
 sub file_new_handler {
     # we want to handle the not logged in case ourselves
-    my ( $ok, $rv ) = controller( anonymous => 1 );
+    my ( $ok, $rv ) = api_controller( anonymous => 1 );
     return $rv unless $ok;
 
     my $r = $rv->{r};
@@ -107,7 +107,7 @@ sub file_new_handler {
 #
 sub file_edit_handler {
     # we want to handle the not logged in case ourselves
-    my ( $ok, $rv ) = controller( anonymous => 1 );
+    my ( $ok, $rv ) = api_controller( anonymous => 1 );
     return $rv unless $ok;
 
     my $r = $rv->{r};

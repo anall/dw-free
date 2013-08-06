@@ -75,7 +75,7 @@ sub _oauth_error {
     return api_error( "OAuth Error: %s", $_[0] );
 }
 
-sub controller {
+sub api_controller {
     my ( %args ) = @_;
     $args{oauth} //= 1;
     $args{oauth_fail_sub} //= \&_oauth_error;

@@ -45,6 +45,34 @@ sub process_fired_events {
     $sclient->work_until_done;
 }
 
+sub subs_matching_event {
+    my ($class, $evt, $reason_arrayref, @subs ) = @_;
+
+    my %related = map { $_=> 1 } $evt->related_events;
+
+    my @matching_subs;
+    my @reasons;
+    my $log_filter_reason = $reason_arrayref ? 1 : 0;
+
+    foreach my $s ( @subs ) {
+        # fix the event class if necessary
+        my $evt = $related{$s->etypeid}
+            ? bless( $evt, $s->event_class )
+            : $evt;
+
+        # check if we match
+        my $reason;
+        my $matches = $evt->matches_filter( $s, $log_filter_reason ? \$reason : undef );
+
+        push @matching_subs, $s if $matches;
+        push @reasons, [$s, $reason] if $log_filter_reason && $reason;
+    }
+
+    $$reason_arrayref = \@reasons if $log_filter_reason;
+
+    return @matching_subs;
+}
+
 sub jobs_of_unique_matching_subs {
     my ($class, $evt, @subs) = @_;
     my %has_done = ();
@@ -56,13 +84,7 @@ sub jobs_of_unique_matching_subs {
         warn "jobs of unique subs (@subs) matching event (@$params)\n";
     }
 
-    my %related = map { $_=> 1 } $evt->related_events;
-
-    foreach my $s ( grep {
-        $related{$_->etypeid}
-            ? bless( $evt, $_->event_class )->matches_filter( $_ )
-            : $evt->matches_filter( $_ )
-        } @subs ) {
+    foreach my $s ( $class->subs_matching_event( $evt, undef, @subs ) ) {
 
         next if $has_done{$s->unique}++;
         push @subjobs, TheSchwartz::Job->new(

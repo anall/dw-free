@@ -1,0 +1,15 @@
+.admin.link=Subscriptions Check
+
+.admin.text=Show how the comment notification subscriptions behave for a particular comment
+
+.form.button.submit=Check Comment Subscriptions
+
+.form.error.invalid_comment=Invalid comment url
+
+.form.label.subscriber=Subscriber Username
+
+.form.label.comment=Comment URL
+
+.header.match=Matched
+
+.header.nomatch=Not Matched

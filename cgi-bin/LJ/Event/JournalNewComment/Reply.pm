@@ -140,7 +140,13 @@ sub raw_subscriptions {
 }
 
 sub matches_filter {
-    my ($self, $subscr) = @_;
+    my ( $self, $subscr, $filter_reason_ref ) = @_;
+
+    my $filter = sub {
+        my $msg = $_[0];
+        $$filter_reason_ref = "[JournalNewComment::Reply matches_filter] $msg" if $filter_reason_ref;
+        return 0;
+    };
 
     my $sjid = $subscr->journalid;
     my $ejid = $self->event_journal->{userid};
@@ -150,40 +156,46 @@ sub matches_filter {
     my $comment = $self->comment;
 
     # Do not send on own comments
-    return 0 unless $comment->visible_to( $watcher );
+    return $filter->( "Comment not visible to watcher" ) unless $comment->visible_to( $watcher );
 
     # Do not send if opt_noemail applies
-    return 0 if $self->apply_noemail( $watcher, $comment, $subscr->method );
+    return $filter->( "opt_noemail applies" ) if $self->apply_noemail( $watcher, $comment, $subscr->method );
 
     my $parent = $comment->parent;
 
     if ( $arg2 == 0 ) {
         # Someone replies to my comment
-        return 0 unless $parent;
-        return 0 unless $parent->posterid == $watcher->id;
+        return $filter->( "sub is for someone replies to my comment; this comment has no parent" )
+            unless $parent;
+        return $filter->( "sub is for someone replies to my comment; this comment is a reply to someone else's comment")
+            unless $parent->posterid == $watcher->id;
 
         # Make sure we didn't post the comment
         return 1 unless $comment->posterid == $watcher->id;
     } elsif ( $arg2 == 1 ) {
         # Someone replies to my entry in a community
         my $entry = $comment->entry;
-        return 0 unless $entry;
+        return $filter->( "sub is for someone replies to my entry in a community; this comment has no entry" )
+            unless $entry;
 
         # Make sure the entry is posted by the watcher
-        return 0 unless $entry->posterid == $watcher->id;
+        return $filter->( "sub is for someone replies to my entry in a community; this entry is not mine" )
+            unless $entry->posterid == $watcher->id;
 
         # Make sure we didn't post the comment
         return 1 unless $comment->posterid == $watcher->id;
     } elsif ( $arg2 == 2 ) {
         # I comment on any entry in someone else's journal
         my $entry = $comment->entry;
-        return 0 unless $entry;
+        return $filter->( "sub is for I comment to any entry in someone else's journal; this comment has no entry")
+            unless $entry;
 
         # Make sure we posted the comment
         return 1 if $comment->posterid == $watcher->id;
     }
 
-    return 0;
+    my $arg1 = $subscr->arg1;
+    return $filter->( "does not match any relevant cases: arg1=$arg1 arg2=$arg2" );
 }
 
 1;

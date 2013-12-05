@@ -1,0 +1,66 @@
+[%# admin/subscriptions/index.tt
+
+Show how the comment notification subscriptions behave for a particular comment
+
+Authors:
+    Afuna <coder.dw@afunamatata.com>
+
+This program is free software; you may redistribute it and/or modify it under
+the same terms as Perl itself.  For a copy of the license, please reference
+'perldoc perlartistic' or 'perldoc perlgpl'.
+%]
+
+[%- sections.title = ".admin.link" | ml -%]
+[%- CALL dw.active_resource_group( "foundation" ) -%]
+
+[%- dw.need_res( { group => "foundation" }
+) -%]
+
+[% BLOCK subscription %]
+   <strong>[%- sub.event_class.replace("LJ::Event::","") -%] ([%- sub.notify_class.split("::").last -%])</strong>
+[% END %]
+
+[%- IF matching_subs.size > 0  -%]
+    <h2>[%- ".header.match" | ml -%]</h2>
+    <ul class="no-bullet">
+    [%- FOREACH sub = matching_subs -%]
+        <li>[% PROCESS subscription sub=sub %]
+        </li>
+    [%- END -%]
+    </ul>
+[%- END -%]
+
+[%- IF nonmatching_subs.size > 0  -%]
+    <h2>[%- ".header.nomatch" | ml -%]</h2>
+    <ul class="no-bullet">
+    [%- FOREACH item = nonmatching_subs -%]
+        [%- SET sub = item.first
+                reason = item.last
+        -%]
+        <li class="row">
+            <div class="columns large-3">[% PROCESS subscription sub=sub %]</div>
+            <div class="columns large-9">[%- reason -%]</div>
+        </li>
+    [%- END -%]
+    </ul>
+[%- END -%]
+
+[%- IF matching_subs.size > 0 or nonmatching_subs.size > 0  -%]<hr>[%- END -%]
+<div class="panel">
+    <form action="[% action_url %]" method="POST">
+        [%- dw.form_auth -%]
+        [%- form.textbox(
+            label = dw.ml( ".form.label.subscriber" ),
+            name = "subscriber",
+            id = "subscriber",
+        ) -%]
+        [%- form.textbox(
+            label = dw.ml( ".form.label.comment" ),
+            name = "comment_url",
+            id = "comment_url",
+        ) -%]
+        [%- form.submit(
+            value = dw.ml( ".form.button.submit" )
+        ) -%]
+    </form>
+</div>

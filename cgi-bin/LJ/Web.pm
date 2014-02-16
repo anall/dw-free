@@ -3318,9 +3318,6 @@ sub subscribe_interface {
 
     my @notify_classes = LJ::NotificationMethod->all_classes or return "No notification methods";
 
-    # skip the inbox type; it's always on
-    @notify_classes = grep { $_ ne 'LJ::NotificationMethod::Inbox' } @notify_classes;
-
     my $tracking = [];
 
     # title of the tracking category
@@ -3566,8 +3563,8 @@ sub subscribe_interface {
 
             if ( $do_show ) {
                 $cat_html  .= LJ::html_check({
-                    id       => $input_name,
-                    name     => $input_name,
+                    id       => "${input_name}_global",
+                    name     => "${input_name}_global",
                     class    => "SubscriptionInboxCheck",
                     selected => $selected,
                     noescape => 1,
@@ -3577,7 +3574,7 @@ sub subscribe_interface {
 
                 unless ($pending_sub->pending) {
                     $cat_html .= LJ::html_hidden({
-                        name  => "${input_name}-old",
+                        name  => "${input_name}_global-old",
                         value => $subscribed,
                     });
                 }

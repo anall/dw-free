@@ -249,7 +249,7 @@ no strict "vars";
 
     unless (@LJ::NOTIFY_TYPES) {
         @LJ::NOTIFY_TYPES = map { "LJ::NotificationMethod::$_" }
-                            qw ( Email );
+                            qw ( Inbox Email );
     }
 
     # random user defaults to a week

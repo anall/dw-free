@@ -23,6 +23,7 @@ use base 'DW::Request::Base';
 use Apache2::Const -compile => qw/ :common :http /;
 use Apache2::Log ();
 use Apache2::Request;
+use Apache2::Connection ();
 use Apache2::Response ();
 use Apache2::RequestRec ();
 use Apache2::RequestUtil ();
@@ -170,7 +171,9 @@ sub err_header_out_add {
 # returns the ip address of the connected person
 sub get_remote_ip {
     my DW::Request::Apache2 $self = $_[0];
-    return $self->{r}->connection->remote_ip;
+    my $rv = eval { $self->{r}->useragent_ip };
+    $rv = $self->{r}->connection->remote_ip if $@;
+    return $rv;
 }
 
 # sets last modified

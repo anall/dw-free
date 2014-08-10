@@ -128,7 +128,8 @@ sub handler
                 $to_reload{$file} = 1;
             }
             my @key_del;
-            foreach (my ($key, $file) = each %INC) {
+            keys %INC; # Reset iterator
+	    foreach (my ($key, $file) = each %INC) {
                 push @key_del, $key if $to_reload{$file};
             }
             delete $INC{$_} foreach @key_del;

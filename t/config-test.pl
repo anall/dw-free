@@ -360,6 +360,7 @@
     ## MISC SETTINGS ##
     $DOMAIN = "test.dw";
     $EMAIL_POST_DOMAIN = "post.$DOMAIN";
+    $EMBED_MODULE_DOMAIN = "embed.dw";
 
     $SITENAME = "DW Test Installation";
     $SITENAME_SHORT = "DW Test";
